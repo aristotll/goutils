@@ -4,7 +4,7 @@ import (
 	"github.com/gotestyourself/gotestyourself/assert"
 	"testing"
 
-	"github.com/printfcoder/goutils/stringutils"
+	"github.com/aristotll/goutils/stringutils"
 )
 
 func TestIsEmpty(t *testing.T) {
@@ -65,7 +65,10 @@ func TestIsNotBlank(t *testing.T) {
 		t.Error(out)
 	}
 
-	t.Log(out)
+	out = stringutils.IsNotBlank(" test")
+	if !out {
+		t.Error(out)
+	}
 }
 
 func TestIsAnyBlank(t *testing.T) {

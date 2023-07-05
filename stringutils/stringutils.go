@@ -12,7 +12,7 @@ import (
 
 	"strconv"
 
-	"github.com/printfcoder/goutils/mathutils"
+	"github.com/aristotll/goutils/mathutils"
 )
 
 const (
@@ -77,13 +77,16 @@ func IsAllEmpty(css ...string) bool {
 
 // IsBlank checks if a cs is empty, or nil point or whitespace only.
 func IsBlank(cs string) bool {
-
-	if strLen := len(cs); strLen == 0 {
+	if IsEmpty(cs) {
 		return true
-	} else {
-		return len(strings.TrimSpace(cs)) != strLen
 	}
 
+	for _, ru := range cs {
+		if !unicode.IsSpace(ru) {
+			return false
+		}
+	}
+	return true
 }
 
 // IsNotBlank checks if a cs is not empty, not nill and not whitespace only.
@@ -162,7 +165,7 @@ func TruncateFromWithMaxWith(str string, offset, maxWidth int) (ret string, err 
 }
 
 // SubString returns a new string that is a substring of this string
-// beginIndex means the string returned is the substring begins it and extends to the end of input``
+// beginIndex means the string returned is the substring begins it and extends to the end of input“
 func SubString(str string, beginIndex int) (ret string, err error) {
 
 	if beginIndex < 0 {
@@ -297,8 +300,7 @@ func StripWithChar(str, stripChars string) string {
 // stringutils.StripStart("abc", "")        = "abc"
 // stringutils.StripStart("yxabc  ", "xyz") = "abc  "
 func StripStart(str, stripChars string) string {
-	str2 := []rune(str)
-	l := len(str2)
+	l := RuneLen(str)
 	if l == 0 {
 		return str
 	}
@@ -330,8 +332,7 @@ func StripStart(str, stripChars string) string {
 // stringutils.StripEnd("  abcyx", "xyz") = "  abc"
 // stringutils.StripEnd("120.00", ".0")   = "12"
 func StripEnd(str, stripChars string) string {
-	str2 := []rune(str)
-	end := len(str2)
+	end := RuneLen(str)
 	if end == 0 {
 		return str
 	}
@@ -400,9 +401,10 @@ func Compare(str1, str2 string) int {
 
 // CompareIgnoreCase compares two Strings lexicographically, ignoring case differences.
 // returning:
-//  = 0, if str1 is equal to str2 (or both {@code null})
-//  < 0, if str1 is less than str2
-//  > 0, if str1 is greater than str2
+//
+//	= 0, if str1 is equal to str2 (or both {@code null})
+//	< 0, if str1 is less than str2
+//	> 0, if str1 is greater than str2
 func CompareIgnoreCase(str1, str2 string) int {
 
 	if str1 == str2 {
@@ -893,13 +895,11 @@ func ContainsNone(cs string, searchChars ...string) bool {
 // stringutils.Left("abc", 4)   = "abc"
 func Left(str string, l int) string {
 
-	sl := RuneLen(str)
-
-	if sl == 0 || l < 0 {
+	if l < 0 || IsEmpty(str) {
 		return EMPTY
 	}
 
-	if sl <= l {
+	if RuneLen(str) <= l {
 		return str
 	}
 
@@ -913,12 +913,12 @@ func Left(str string, l int) string {
 // stringutils.Right("abc", 2)   = "bc"
 // stringutils.Right("abc", 4)   = "abc"
 func Right(str string, r int) string {
-	sl := RuneLen(str)
 
-	if sl == 0 || r < 0 {
+	if r < 0 || IsEmpty(str) {
 		return EMPTY
 	}
 
+	sl := RuneLen(str)
 	if sl <= r {
 		return str
 	}
@@ -997,12 +997,21 @@ func ToInt32(str string) (ret int32, err error) {
 
 // ToInt64 converts str to int64
 func ToInt64(str string) (ret int64, err error) {
-	ret, err = strconv.ParseInt(str, 10, 64)
-	return
+	return strconv.ParseInt(str, 10, 64)
 }
 
 // FromInt64 converts int64 to str
 func FromInt64(in int64) (ret string) {
+	return strconv.FormatInt(in, 10)
+}
+
+// ToInt64UsingHex converts str to int64 using hex
+func ToInt64UsingHex(str string) (ret int64, err error) {
+	return strconv.ParseInt(str, 16, 64)
+}
+
+// FromInt64UsingHex converts int64 to str using hex
+func FromInt64UsingHex(in int64) (ret string) {
 	return strconv.FormatInt(in, 16)
 }
 
@@ -1058,11 +1067,11 @@ func IntArrayToStringArray(in []int) []string {
 }
 
 // IsWhitespace returns if the str is a whitespace of latin-1
-// 	'\t', '\n', '\v', '\f', '\r', ' ', U+0085 (NEL), U+00A0 (NBSP) are all true
+//
+//	'\t', '\n', '\v', '\f', '\r', ' ', U+0085 (NEL), U+00A0 (NBSP) are all true
 func IsWhitespace(str string) bool {
 
-	l := len(str)
-	if l != 1 {
+	if len(str) != 1 {
 		return false
 	}
 
@@ -1131,12 +1140,20 @@ func RegionMatches(cs string, ignoreCase bool, thisStart int,
 func CharAt(str string, index int) (ret string, err error) {
 
 	if index < 0 || index >= len(str) {
+		// 有error 的时候返回空字符串，实际上可以认为是可以用的默认值
 		return "", fmt.Errorf("%d index out of bound %d", index, len(str))
 	}
 
-	str2 := []rune(str)
+	return charAtUnSafe(str, index), nil
+}
 
-	return string(str2[index : index+1]), nil
+func charAtUnSafe(str string, index int) string {
+	return string(charAtRune(str, index))
+}
+
+func charAtRune(str string, index int) []rune {
+	str2 := []rune(str)
+	return str2[index : index+1]
 }
 
 // ToCharArray returns a char array contains all string chars;
@@ -1266,8 +1283,8 @@ func Split(str, sep string) []string {
 // stringutils.DeleteWhitespace("abc")        = "abc"
 // stringutils.DeleteWhitespace("   ab  c  ") = "abc"
 func DeleteWhitespace(str string) string {
-	if str == "" {
-		return ""
+	if IsEmpty(str) {
+		return EMPTY
 	}
 
 	sz := RuneLen(str)
@@ -1278,6 +1295,7 @@ func DeleteWhitespace(str string) string {
 		charT, _ := CharAt(str, i)
 		if !IsWhitespace(charT) {
 			builder.WriteString(charT)
+			count++
 		}
 	}
 	if count == sz {
@@ -1511,19 +1529,19 @@ func AppendIfMissing(str, suffix string, suffixes ...string) string {
 	return appendIfMissing(str, suffix, false, suffixes...)
 }
 
-//  Appends the suffix to the end of the string if the string does not
-//  already end, case insensitive, with any of the suffixes.
+// Appends the suffix to the end of the string if the string does not
+// already end, case insensitive, with any of the suffixes.
 //
-//  stringutils.AppendIfMissingIgnoreCase("", "xyz") = "xyz"
-//  stringutils.AppendIfMissingIgnoreCase("abc", "xyz") = "abcxyz"
-//  stringutils.AppendIfMissingIgnoreCase("abcxyz", "xyz") = "abcxyz"
-//  stringutils.AppendIfMissingIgnoreCase("abcXYZ", "xyz") = "abcXYZ"
-//  stringutils.AppendIfMissingIgnoreCase("abc", "xyz", "") = "abc"
-//  stringutils.AppendIfMissingIgnoreCase("abc", "xyz", "mno") = "abcxyz"
-//  stringutils.AppendIfMissingIgnoreCase("abcxyz", "xyz", "mno") = "abcxyz"
-//  stringutils.AppendIfMissingIgnoreCase("abcmno", "xyz", "mno") = "abcmno"
-//  stringutils.AppendIfMissingIgnoreCase("abcXYZ", "xyz", "mno") = "abcXYZ"
-//  stringutils.AppendIfMissingIgnoreCase("abcMNO", "xyz", "mno") = "abcMNO"
+// stringutils.AppendIfMissingIgnoreCase("", "xyz") = "xyz"
+// stringutils.AppendIfMissingIgnoreCase("abc", "xyz") = "abcxyz"
+// stringutils.AppendIfMissingIgnoreCase("abcxyz", "xyz") = "abcxyz"
+// stringutils.AppendIfMissingIgnoreCase("abcXYZ", "xyz") = "abcXYZ"
+// stringutils.AppendIfMissingIgnoreCase("abc", "xyz", "") = "abc"
+// stringutils.AppendIfMissingIgnoreCase("abc", "xyz", "mno") = "abcxyz"
+// stringutils.AppendIfMissingIgnoreCase("abcxyz", "xyz", "mno") = "abcxyz"
+// stringutils.AppendIfMissingIgnoreCase("abcmno", "xyz", "mno") = "abcmno"
+// stringutils.AppendIfMissingIgnoreCase("abcXYZ", "xyz", "mno") = "abcXYZ"
+// stringutils.AppendIfMissingIgnoreCase("abcMNO", "xyz", "mno") = "abcMNO"
 func AppendIfMissingIgnoreCase(str, suffix string, suffixes ...string) string {
 	return appendIfMissing(str, suffix, true, suffixes...)
 }
@@ -1607,15 +1625,15 @@ func PrependIfMissingIgnoreCase(str, prefix string, prefixes ...string) string {
 
 // endregion
 
-//  Wrap wraps a String with another String.
-//  stringutils.Wrap("", *)           = ""
-//  stringutils.Wrap("ab", "x")       = "xabx"
-//  stringutils.Wrap("ab", "\"")      = "\"ab\""
-//  stringutils.Wrap("\"ab\"", "\"")  = "\"\"ab\"\""
-//  stringutils.Wrap("ab", "'")       = "'ab'"
-//  stringutils.Wrap("'abcd'", "'")   = "''abcd''"
-//  stringutils.Wrap("\"abcd\"", "'") = "'\"abcd\"'"
-//  stringutils.Wrap("'abcd'", "\"")  = "\"'abcd'\""
+// Wrap wraps a String with another String.
+// stringutils.Wrap("", *)           = ""
+// stringutils.Wrap("ab", "x")       = "xabx"
+// stringutils.Wrap("ab", "\"")      = "\"ab\""
+// stringutils.Wrap("\"ab\"", "\"")  = "\"\"ab\"\""
+// stringutils.Wrap("ab", "'")       = "'ab'"
+// stringutils.Wrap("'abcd'", "'")   = "”abcd”"
+// stringutils.Wrap("\"abcd\"", "'") = "'\"abcd\"'"
+// stringutils.Wrap("'abcd'", "\"")  = "\"'abcd'\""
 func Wrap(str, wrapWith string) string {
 
 	if str == "" || wrapWith == "" {

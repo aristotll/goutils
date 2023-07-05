@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/printfcoder/goutils/crypto"
+	"github.com/aristotll/goutils/crypto"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

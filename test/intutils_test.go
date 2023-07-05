@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/printfcoder/goutils/intutils"
+	"github.com/aristotll/goutils/intutils"
 	"testing"
 )
 
